@@ -1,0 +1,965 @@
+﻿<Window x:Class="FestpunktDB.GUI.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:uc="clr-namespace:FestpunktDB.GUI"
+        mc:Ignorable="d"
+        Title="Datenbank Festpunktfeld Team BahnGeodaten, RB OST" Height="700" Width="1300">
+    <DockPanel>
+        <TabControl x:Name="MainTabControl" Background="{x:Null}" SelectionChanged="MainTabControl_SelectionChanged">
+            <TabItem x:Name="ViewTabItem" Header="Ansicht" HorizontalAlignment="Center" Height="20" VerticalAlignment="Center" Width="54">
+                <!--MouseLeftButtonUp="ViewTabItem_MouseLeftButtonUp "-->
+                <Grid Background="#FFE5E5E5">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition/>
+                    </Grid.RowDefinitions>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="277*"/>
+                        <ColumnDefinition Width="718*"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto">
+                            <ColumnDefinition.Style>
+                                <Style TargetType="ColumnDefinition">
+                                    <Setter Property="MinWidth" Value="0" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding ElementName=FilterExpander, Path=IsExpanded}" Value="True">
+                                            <Setter Property="MinWidth" Value="290" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </ColumnDefinition.Style>
+                        </ColumnDefinition>
+                    </Grid.ColumnDefinitions>
+                    <Grid x:Name="Tables" Margin="5" Grid.RowSpan="2" Grid.ColumnSpan="2">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="56*" MinHeight="300"/>
+                            <RowDefinition Height="11*"/>
+                            <RowDefinition Height="11*"/>
+                            <RowDefinition Height="11*"/>
+                            <RowDefinition Height="11*"/>
+                        </Grid.RowDefinitions>
+                        <Grid Grid.Row="0" x:Name="PpTablePanel">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="33*"/>
+                                <ColumnDefinition Width="240*"/>
+                                <ColumnDefinition Width="56*"/>
+                                <ColumnDefinition Width="892*"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="20"/>
+                                <RowDefinition/>
+                                <RowDefinition Height="22"/>
+                            </Grid.RowDefinitions>
+                            <DockPanel Grid.ColumnSpan="4">
+                                <TextBlock TextWrapping="Wrap" HorizontalAlignment="Left" Text="Tabelle PP" FontSize="13"/>
+                                <Button x:Name="RefreshButton" DockPanel.Dock="Right" Width="20" Background="{x:Null}" Click="RefreshButton_Click" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                    <Image Source="/resources/refresh.png"></Image>
+                                </Button>
+                                <DockPanel HorizontalAlignment="Right" VerticalAlignment="Stretch" DockPanel.Dock="Right" Margin="0,0,25,0">
+                                    <TextBox x:Name="QtEntriesPerPageInput" DockPanel.Dock="Left" VerticalAlignment="Center" Text="100" HorizontalAlignment="Left" MinWidth="20"/>
+                                    <TextBlock Text=" Einträge pro Seite" VerticalAlignment="Center" Margin="0,0,10,0" HorizontalAlignment="Stretch"/>
+                                    <Button x:Name="QtEntriesPerPageConfirmButton" DockPanel.Dock="Right" Content="OK" VerticalAlignment="Center" HorizontalAlignment="Center" Height="18" Click="QtEntriesPerPageConfirmButton_Click"/>
+                                </DockPanel>
+                            </DockPanel>
+                            <DataGrid Grid.Row="1" x:Name="PpTable" AutoGenerateColumns="True"
+                                      AutoGeneratingColumn="PpTable_OnAutoGeneratingColumn"
+                                      SelectionChanged="PpTable_SelectionChanged" ColumnWidth="*" SelectionMode="Extended" IsReadOnly="True" Grid.ColumnSpan="4" Margin="0,0,0,22" Grid.RowSpan="2"/>
+                            <Border Grid.Row="2" BorderThickness="0,0,0,1" BorderBrush="Gray" Grid.ColumnSpan="4">
+                                <DockPanel DockPanel.Dock="Bottom" HorizontalAlignment="Stretch" VerticalAlignment="Bottom" LastChildFill="False">
+                                    <TextBlock x:Name="EntryCountTextBlock" FontStyle="Italic" VerticalAlignment="Center"/>
+                                    <TextBlock Text=" Einträge" VerticalAlignment="Center" FontStyle="Italic"/>
+                                    <Button x:Name="LastPageRightButton" Content="&gt;|" FontSize="15"
+                                            FontFamily="Bodoni MT Black" Margin="5,0,0,0" Click="LastPageRightButton_Click" DockPanel.Dock="Right"/>
+                                    <Button x:Name="MorePageRightButton" Content="&gt;&gt;" FontSize="15" ToolTip="nächste 5 Seiten"
+                                            FontFamily="Bodoni MT Black" Margin="5,0,0,0" Click="MorePageRightButton_Click" DockPanel.Dock="Right"/>
+                                    <Button x:Name="PageRightButton" Content="&gt;" FontSize="15"
+                                            FontFamily="Bodoni MT Black" Margin="5,0,0,0" Click="PageRightButton_Click" DockPanel.Dock="Right"/>
+                                    <TextBlock x:Name="PageCountTextBlock" VerticalAlignment="Center" DockPanel.Dock="Right"></TextBlock>
+                                    <TextBlock Text=" von " VerticalAlignment="Center" DockPanel.Dock="Right"></TextBlock>
+                                    <ComboBox x:Name="PageNumberComboBox" IsEditable="True" MinWidth="30"
+                                              TextBoxBase.TextChanged="PageNumberComboBox_TextChanged" SelectedIndex="0" DockPanel.Dock="Right"/>
+                                    <TextBlock Text="Seite " FontWeight="Normal" HorizontalAlignment="Stretch" VerticalAlignment="Center" DockPanel.Dock="Right"></TextBlock>
+                                    <Button x:Name="PageLeftButton" Content="&lt;" FontSize="15"
+                                            FontFamily="Bodoni MT Black" Margin="0,0,5,0" Click="PageLeftButton_Click" DockPanel.Dock="Right">
+                                        <Button.Style>
+                                            <Style TargetType="Button">
+                                                <Setter Property="IsEnabled" Value="true" />
+                                                <Style.Triggers>
+                                                    <DataTrigger
+                                                        Binding="{Binding ElementName=PageNumberComboBox, Path=Text}"
+                                                        Value="1">
+                                                        <Setter Property="IsEnabled" Value="false" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Button.Style>
+                                    </Button>
+                                    <Button x:Name="MorePageLeftButton" Content="&lt;&lt;" FontSize="15" ToolTip="vorherige 5 Seiten"
+                                            FontFamily="Bodoni MT Black" Margin="0,0,5,0" Click="MorePageLeftButton_Click" DockPanel.Dock="Right">
+                                        <Button.Style>
+                                            <Style TargetType="Button">
+                                                <Setter Property="IsEnabled" Value="true" />
+                                                <Style.Triggers>
+                                                    <DataTrigger
+                                                        Binding="{Binding ElementName=PageNumberComboBox, Path=Text}"
+                                                        Value="1">
+                                                        <Setter Property="IsEnabled" Value="false" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Button.Style>
+                                    </Button>
+                                    <Button x:Name="LastPageLeftButton" Content="|&lt;" FontSize="15"
+                                            FontFamily="Bodoni MT Black" Margin="0,0,5,0" Click="LastPageLeftButton_Click" DockPanel.Dock="Right" FontWeight="Normal" FontStyle="Normal">
+                                        <Button.Style>
+                                            <Style TargetType="Button">
+                                                <Setter Property="IsEnabled" Value="true" />
+                                                <Style.Triggers>
+                                                    <DataTrigger
+                                                        Binding="{Binding ElementName=PageNumberComboBox, Path=Text}"
+                                                        Value="1">
+                                                        <Setter Property="IsEnabled" Value="false" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Button.Style>
+                                    </Button>
+                                </DockPanel>
+                            </Border>
+                        </Grid>
+                        <DockPanel x:Name="PlTablePanel" Grid.Row="3" Margin="0,3,0,0">
+                            <TextBlock TextWrapping="Wrap" DockPanel.Dock="Top" FontSize="13"><Run Language="de-de" Text="Tabelle PL"/></TextBlock>
+                            <DataGrid x:Name="PlTable" DockPanel.Dock="Top" ColumnWidth="*" AutoGeneratingColumn="PlTable_AutoGeneratingColumn" SelectionChanged="PlTable_SelectionChanged" IsReadOnly="True"/>
+                        </DockPanel>
+                        <DockPanel x:Name="PhTablePanel" Grid.Row="1" Margin="0,3,0,0">
+                            <TextBlock TextWrapping="Wrap" DockPanel.Dock="Top" FontSize="13"><Run Text="Tabelle PH"/></TextBlock>
+                            <DataGrid x:Name="PhTable" DockPanel.Dock="Top" ColumnWidth="*" AutoGeneratingColumn="PhTable_AutoGeneratingColumn" SelectionChanged="PhTable_SelectionChanged" IsReadOnly="True"/>
+                        </DockPanel>
+                        <DockPanel x:Name="PkTablePanel" Grid.Row="2" Margin="0,3,0,0">
+                            <TextBlock TextWrapping="Wrap" DockPanel.Dock="Top"><Run Text="Tabelle PK" FontSize="13"/></TextBlock>
+                            <DataGrid x:Name="PkTable" DockPanel.Dock="Top" ColumnWidth="*" AutoGeneratingColumn="PkTable_AutoGeneratingColumn" SelectionChanged="PkTable_SelectionChanged" IsReadOnly="True"/>
+                        </DockPanel>
+                        <DockPanel x:Name="PsTablePanel" Grid.Row="4" Margin="0,3,0,0">
+                            <TextBlock TextWrapping="Wrap" DockPanel.Dock="Top"><Run Text="Tabelle PS" FontSize="13"/></TextBlock>
+                            <DataGrid x:Name="PsTable" DockPanel.Dock="Top" ColumnWidth="*" AutoGeneratingColumn="PsTable_AutoGeneratingColumn" SelectionChanged="PsTable_SelectionChanged" IsReadOnly="True"/>
+                        </DockPanel>
+                    </Grid>
+                    <Grid x:Name="DataSheetDisplay" Grid.Column="3" Grid.Row="1" Margin="5,5,5,5" 
+                          ScrollViewer.VerticalScrollBarVisibility="Auto" ScrollViewer.HorizontalScrollBarVisibility="Auto">
+                        <Grid.RowDefinitions>
+                            <RowDefinition/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+                        <Image x:Name="JpgDisplay" ScrollViewer.VerticalScrollBarVisibility="Disabled"/>
+                        <WebBrowser x:Name="PdfDisplay" Grid.Row="0" MinWidth="300" ScrollViewer.VerticalScrollBarVisibility="Disabled" Visibility="Collapsed"/>
+                        <Grid x:Name="TrafficLight" Grid.Row="1" HorizontalAlignment="Right" Visibility="Collapsed">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <Label x:Name="JpgIndicator" HorizontalAlignment="Center" VerticalAlignment="Center" Content="JPG" BorderBrush="Black" BorderThickness="1" 
+                                   Background="Red" ToolTip="Klicken Sie, um eine fehlende Skizzendatei hinzuzufügen" MouseUp="JpgIndicator_MouseUp" Grid.RowSpan="3" Width="33" Margin="0.5"/>
+                            <Label x:Name="PdfIndicator" HorizontalAlignment="Center" VerticalAlignment="Center" Content="PDF" BorderBrush="Black" BorderThickness="1"
+                                   Grid.Column="1" Margin="0.5"
+                                   Background="Red" ToolTip="Klicken Sie, um eine fehlende Skizzendatei hinzuzufügen" MouseUp="PdfIndicator_MouseUp" Grid.RowSpan="2" Width="33"/>
+                            <Label x:Name="PptIndicator" HorizontalAlignment="Center" VerticalAlignment="Center" Content="PPT" BorderBrush="Black" BorderThickness="1"
+                                   Grid.Column="2" Margin="0.5"
+                                   Background="Red" ToolTip="Klicken Sie, um eine fehlende Skizzendatei hinzuzufügen" MouseUp="PptIndicator_MouseUp" Width="33"/>
+                        </Grid>
+                    </Grid>
+                    <Expander x:Name="FilterExpander" Header="Filter" HorizontalAlignment="Center" VerticalAlignment="Center" Grid.Column="3" AutomationProperties.Name="Filter" HorizontalContentAlignment="Right">
+                        <UniformGrid x:Name="FilterGrid" Background="#FFC6C1C1" VerticalAlignment="Top" HorizontalAlignment="Right" MinWidth="280" Rows="6" >
+                            <DockPanel Margin="3,0,3,0">
+                                <DockPanel HorizontalAlignment="Center" VerticalAlignment="Center" Margin="3,0,0,0">
+                                    <TextBlock TextWrapping="Wrap" Text="PAD:" Margin="0,0,7,0" FontWeight="Normal"/>
+                                    <TextBox x:Name="PadInput" TextWrapping="Wrap" DockPanel.Dock="Left" MinWidth="50" TextChanged="PadInput_TextChanged"/>
+                                    <Image ToolTip="Die Tabelle wird nach mindestens 4 Ziffern durch PAD gefiltert." DockPanel.Dock="Right" HorizontalAlignment="Center" Source="/resources/info.png" Stretch="Fill" Width="12" VerticalAlignment="Top"/>
+                                </DockPanel>
+                                <DockPanel DockPanel.Dock="Right" HorizontalAlignment="Right" VerticalAlignment="Center">
+                                    <TextBlock TextWrapping="Wrap" DockPanel.Dock="Left" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="0,0,14,0"><Run Text="Punktart:"/></TextBlock>
+                                    <ComboBox x:Name="StatusSelection" DockPanel.Dock="Left" IsDropDownOpen="False" Width="50" HorizontalAlignment="Left" VerticalAlignment="Center"  DropDownClosed="StatusSelection_DropDownClosed">
+                                        <ComboBoxItem Content="PS0"/>
+                                        <ComboBoxItem Content="PS1"/>
+                                        <ComboBoxItem Content="PS2"/>
+                                        <ComboBoxItem Content="PS3"/>
+                                        <ComboBoxItem Content="PS4"/>
+                                        <ComboBoxItem Content="Alle"/>
+                                    </ComboBox>
+                                </DockPanel>
+                            </DockPanel>
+                            <UniformGrid Columns="3" Margin="3,0,3,0">
+                                <DockPanel>
+                                    <TextBlock TextWrapping="Wrap" HorizontalAlignment="Left" VerticalAlignment="Center" ><Run Text="Blattschnitt:"/></TextBlock>
+                                    <Image ToolTip="Die Tabelle wird erst durch Blattschnitt gefiltert, wenn die Eingabe korrekt formatiert ist (z.B. 1122DB)." HorizontalAlignment="Left" Source="/resources/info.png" Stretch="Fill" Width="12" VerticalAlignment="Top"/>
+                                </DockPanel>
+                                <DockPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                                    <TextBlock TextWrapping="Wrap" Text="von" Margin="0,0,7,0"/>
+                                    <TextBox x:Name="SectionInputFrom" TextWrapping="Wrap" DockPanel.Dock="Right" MinWidth="50" MaxLength="6" TextChanged="SectionInputFrom_TextChanged"/>
+                                </DockPanel>
+                                <DockPanel LastChildFill="False" VerticalAlignment="Center" HorizontalAlignment="Right">
+                                    <TextBlock TextWrapping="Wrap" Text="bis" Margin="0,0,7,0"/>
+                                    <TextBox x:Name="SectionInputTo" TextWrapping="Wrap" DockPanel.Dock="Right" MinWidth="50" TextChanged="SectionInputTo_TextChanged" MaxLength="6"/>
+                                </DockPanel>
+                            </UniformGrid>
+                            <Grid Margin="3,0,3,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="91*"/>
+                                    <ColumnDefinition Width="92*"/>
+                                </Grid.ColumnDefinitions>
+                                <DockPanel>
+                                    <TextBlock TextWrapping="Wrap" HorizontalAlignment="Left" VerticalAlignment="Center" Text="Punktnr.:"/>
+                                    <Image ToolTip="Die Tabelle wird durch Punktnr. gefiltert, indem Sie die OK-Taste drücken." HorizontalAlignment="Left" Source="/resources/info.png" Stretch="Fill" Width="12" VerticalAlignment="Top"/>
+                                </DockPanel>
+                                <DockPanel Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,0,0,0">
+                                    <TextBlock TextWrapping="Wrap" Text="von" Margin="0,0,7,0"/>
+                                    <TextBox x:Name="NumberInputFrom" TextWrapping="Wrap" DockPanel.Dock="Right" MinWidth="50" MaxLength="5"/>
+                                </DockPanel>
+                                <DockPanel Grid.Column="2" LastChildFill="False" VerticalAlignment="Center" HorizontalAlignment="Right">
+                                    <TextBlock TextWrapping="Wrap" Text="bis" Margin="0,0,7,0"/>
+                                    <TextBox x:Name="NumberInputTo" TextWrapping="Wrap" DockPanel.Dock="Left" MinWidth="50" MaxLength="5" VerticalAlignment="Center"/>
+                                    <Button x:Name="NumberFilterConfirmButton" DockPanel.Dock="Right" Content="OK" VerticalAlignment="Center" HorizontalAlignment="Center" Click="NumberFilterConfirmButton_Click" Width="20" Margin="10,0,0,0"/>
+                                </DockPanel>
+                            </Grid>
+                            <DockPanel LastChildFill="False">
+                                <DockPanel HorizontalAlignment="Center" VerticalAlignment="Center" Margin="3,0,0,0">
+                                    <TextBlock TextWrapping="Wrap" Text="Strecke:" Margin="0,0,7,0"/>
+                                    <TextBox x:Name="LineInput" TextWrapping="Wrap" DockPanel.Dock="Right" MinWidth="50" TextChanged="LineInput_TextChanged" IsEnabled="False"/>
+                                </DockPanel>
+                                <DockPanel HorizontalAlignment="Right" VerticalAlignment="Center" DockPanel.Dock="Right" Margin="0,0,3,0">
+                                    <TextBlock TextWrapping="Wrap" Text="Auftrag:" Margin="0,0,7,0"/>
+                                    <TextBox x:Name="ContractInput" TextWrapping="Wrap" DockPanel.Dock="Right" MinWidth="50" HorizontalAlignment="Right" VerticalAlignment="Center" TextChanged="ContractInput_TextChanged"/>
+                                </DockPanel>
+                            </DockPanel>
+                            <UniformGrid Columns="3" Margin="3,0,3,0">
+                                <TextBlock TextWrapping="Wrap" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="0,0,14,0"><Run Text="Kilometer:"/></TextBlock>
+                                <DockPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                                    <TextBlock TextWrapping="Wrap" Text="von" Margin="0,0,7,0"/>
+                                    <TextBox x:Name="KmInputFrom" TextWrapping="Wrap" DockPanel.Dock="Right" MinWidth="50" TextChanged="KmInputFrom_TextChanged" IsEnabled="False"/>
+                                </DockPanel>
+                                <DockPanel LastChildFill="False" VerticalAlignment="Center" HorizontalAlignment="Right">
+                                    <TextBlock TextWrapping="Wrap" Text="bis" Margin="0,0,7,0"/>
+                                    <TextBox x:Name="KmInputTo" TextWrapping="Wrap" DockPanel.Dock="Right" MinWidth="50" TextChanged="KmInputTo_TextChanged" IsEnabled="False"/>
+                                </DockPanel>
+                            </UniformGrid>
+                            <Button x:Name="FilterResetButton" Content="Zurücksetzen" Click="FilterResetButton_Click" Width="74" HorizontalAlignment="Center"/>
+                        </UniformGrid>
+                    </Expander>
+                    <GridSplitter HorizontalAlignment="Center" Grid.Column="2" Grid.Row="0"
+                                  Grid.RowSpan="2" Width="5"/>
+                </Grid>
+            </TabItem>
+            <TabItem x:Name="EditTabItem" Header="Bearbeitung" Height="20" VerticalAlignment="Center">
+                <!--MouseLeftButtonUp="EditTabItem_MouseLeftButtonUp"-->
+                <Grid Background="#FFE5E5E5">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <DockPanel x:Name="TableForEditingPanel" Grid.Row="0" Grid.Column="0" Margin="5">
+                        <DockPanel DockPanel.Dock="Top">
+                            <ComboBox x:Name="TablesComboBox" DockPanel.Dock="Left" Height="22" HorizontalAlignment="Left" DropDownClosed="TablesComboBox_DropDownClosed">
+                                <ComboBoxItem Content="Tabelle PP" IsSelected="True"/>
+                                <ComboBoxItem x:Name="PhTableCbxItem" Content="Tabelle PH"/>
+                                <ComboBoxItem x:Name="PkTableCbxItem" Content="Tabelle PK"/>
+                                <ComboBoxItem x:Name="PlTableCbxItem" Content="Tabelle PL"/>
+                                <ComboBoxItem x:Name="PsTableCbxItem" Content="Tabelle PS"/>
+                            </ComboBox>
+                            <Button x:Name="EntryRemoveButton" DockPanel.Dock="Right" HorizontalAlignment="Right" Content="Datensatz aus Bearbeitung entfernen" Click="EntryRemoveButton_Click"/>
+                            <Button Content="Tabelle leeren" HorizontalAlignment="Right" Click="ClearButton_Click" DockPanel.Dock="Right" Margin="0,0,20,0"/>
+                        </DockPanel>
+                        <DataGrid x:Name="TableForEditing" DockPanel.Dock="Top" ColumnWidth="*" IsReadOnly="True"
+                                  SelectionChanged="TableForEditing_SelectionChanged" AutoGeneratingColumn="TableForEditing_AutoGeneratingColumn"/>
+                    </DockPanel>
+                    <Grid x:Name="DataProcessingGrid" Grid.Column="1" Margin="5">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+                        <Border BorderBrush="Black" BorderThickness="1" Margin="0,0,0,5">
+                            <Grid x:Name="PadEditGrid" Margin="5,0,5,5">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition/>
+                                    <RowDefinition MinHeight="20"/>
+                                    <RowDefinition MinHeight="20"/>
+                                    <RowDefinition MinHeight="20"/>
+                                    <RowDefinition MinHeight="20"/>
+                                </Grid.RowDefinitions>
+                                <TextBlock Text="PAD ändern" SnapsToDevicePixels="True" HorizontalAlignment="Center" FontWeight="Bold"/>
+                                <DockPanel HorizontalAlignment="Center" VerticalAlignment="Center" Grid.Row="1">
+                                    <TextBlock TextWrapping="Wrap" Text="aktueller PAD" Margin="0,0,7,0" FontWeight="Normal"/>
+                                    <TextBox x:Name="CurPadInput" TextWrapping="Wrap" DockPanel.Dock="Right" HorizontalAlignment="Right" MinWidth="70" IsEnabled="False"/>
+                                </DockPanel>
+                                <DockPanel HorizontalAlignment="Center" VerticalAlignment="Center" Grid.Row="2" Margin="15,0,0,0">
+                                    <TextBlock TextWrapping="Wrap" Text="neuer PAD" Margin="0,0,7,0" FontWeight="Normal"/>
+                                    <TextBox x:Name="NewPadInput" TextWrapping="Wrap" DockPanel.Dock="Right" MinWidth="70"/>
+                                </DockPanel>
+                                <Grid x:Name="PadEditCheckBoxRow" Grid.Row="3">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition/>
+                                        <ColumnDefinition/>
+                                        <ColumnDefinition/>
+                                        <ColumnDefinition/>
+                                    </Grid.ColumnDefinitions>
+                                    <CheckBox x:Name="PhCheckBox" Content="PH" HorizontalAlignment="Center">
+                                        <CheckBox.Style>
+                                            <Style TargetType="CheckBox">
+                                                <Setter Property="IsEnabled" Value="true" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding ElementName=PhTableCbxItem, Path=Visibility}" Value="Collapsed">
+                                                        <Setter Property="IsEnabled" Value="false" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </CheckBox.Style>
+                                    </CheckBox>
+                                    <CheckBox x:Name="PlCheckBox" Content="PL" HorizontalAlignment="Center" Grid.Column="2">
+                                        <CheckBox.Style>
+                                            <Style TargetType="CheckBox">
+                                                <Setter Property="IsEnabled" Value="true" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding ElementName=PlTableCbxItem, Path=Visibility}" Value="Collapsed">
+                                                        <Setter Property="IsEnabled" Value="false" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </CheckBox.Style>
+                                    </CheckBox>
+                                    <CheckBox x:Name="PsCheckBox" Content="PS" Grid.Column="3" HorizontalAlignment="Center">
+                                        <CheckBox.Style>
+                                            <Style TargetType="CheckBox">
+                                                <Setter Property="IsEnabled" Value="true" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding ElementName=PsTableCbxItem, Path=Visibility}" Value="Collapsed">
+                                                        <Setter Property="IsEnabled" Value="false" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </CheckBox.Style>
+                                    </CheckBox>
+                                    <CheckBox x:Name="PkCheckBox" Content="PK" Grid.Column="1" HorizontalAlignment="Center">
+                                        <CheckBox.Style>
+                                            <Style TargetType="CheckBox">
+                                                <Setter Property="IsEnabled" Value="true" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding ElementName=PkTableCbxItem, Path=Visibility}" Value="Collapsed">
+                                                        <Setter Property="IsEnabled" Value="false" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </CheckBox.Style>
+                                    </CheckBox>
+                                </Grid>
+                                <Button x:Name="PadEditButton" Grid.Row="4" Content="Bestätigen" HorizontalAlignment="Center" VerticalAlignment="Center" Click="PadEditButton_Click"></Button>
+                            </Grid>
+                        </Border>
+                        <Border Grid.Row="2" BorderBrush="Black" BorderThickness="1" Margin="0,5,0,0">
+                            <Grid x:Name="DeleteGrid" Margin="5,0,5,5">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="20"/>
+                                    <RowDefinition Height="20"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="20"/>
+                                    <RowDefinition Height="20"/>
+                                    <RowDefinition Height="20"/>
+                                    <RowDefinition Height="20"/>
+                                </Grid.RowDefinitions>
+                                <TextBlock Text="Löschen" SnapsToDevicePixels="True" HorizontalAlignment="Center" FontWeight="Bold"/>
+                                <Grid x:Name="DelCheckBoxRow1" Grid.Row="1">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition/>
+                                        <ColumnDefinition/>
+                                        <ColumnDefinition/>
+                                        <ColumnDefinition/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <CheckBox x:Name="PhDelCheckBox" Content="PH" HorizontalAlignment="Center">
+                                        <CheckBox.Style>
+                                            <Style TargetType="CheckBox">
+                                                <Setter Property="IsChecked" Value="false" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding ElementName=TablesComboBox, Path=SelectedIndex}" Value="1">
+                                                        <Setter Property="IsChecked" Value="true" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </CheckBox.Style>
+                                    </CheckBox>
+                                    <CheckBox x:Name="PsDelCheckBox" Content="PS" Grid.Column="3" HorizontalAlignment="Center">
+                                        <CheckBox.Style>
+                                            <Style TargetType="CheckBox">
+                                                <Setter Property="IsChecked" Value="false" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding ElementName=TablesComboBox, Path=SelectedIndex}" Value="4">
+                                                        <Setter Property="IsChecked" Value="true" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </CheckBox.Style>
+                                    </CheckBox>
+                                    <CheckBox x:Name="PkDelCheckBox" Content="PK" Grid.Column="1" HorizontalAlignment="Center">
+                                        <CheckBox.Style>
+                                            <Style TargetType="CheckBox">
+                                                <Setter Property="IsChecked" Value="false" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding ElementName=TablesComboBox, Path=SelectedIndex}" Value="2">
+                                                        <Setter Property="IsChecked" Value="true" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </CheckBox.Style>
+                                    </CheckBox>
+                                    <CheckBox Grid.Column="2" x:Name="PlDelCheckBox" Content="PL" HorizontalAlignment="Center">
+                                        <CheckBox.Style>
+                                            <Style TargetType="CheckBox">
+                                                <Setter Property="IsChecked" Value="false" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding ElementName=TablesComboBox, Path=SelectedIndex}" Value="3">
+                                                        <Setter Property="IsChecked" Value="true" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </CheckBox.Style>
+                                    </CheckBox>
+                                    <CheckBox x:Name="DataSheetDelCheckBox" Content="Skizzen" HorizontalAlignment="Center" Grid.Column="4">
+
+                                    </CheckBox>
+                                </Grid>
+                                <Grid Grid.Row ="2">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition/>
+                                        <ColumnDefinition/>
+                                        <ColumnDefinition/>
+                                    </Grid.ColumnDefinitions>
+                                    <Label Content="HSys" FontStyle="Italic" HorizontalAlignment="Center"/>
+                                    <Label Content="KSys" FontStyle="Italic" Grid.Column="1" HorizontalAlignment="Center"/>
+                                    <Label Content="LSys" FontStyle="Italic" Grid.Column="2" HorizontalAlignment="Center"/>
+                                </Grid>
+                                <Grid Grid.Row ="3" Grid.RowSpan="3">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition/>
+                                        <ColumnDefinition/>
+                                        <ColumnDefinition/>
+                                    </Grid.ColumnDefinitions>
+                                    <ListBox x:Name="HSysDelListBox" HorizontalAlignment="Center" VerticalAlignment="Top">
+                                        <ListBoxItem>
+                                            <CheckBox x:Name="HSysDelCheckBox1" Content="O00" VerticalAlignment="Center"/>
+                                        </ListBoxItem>
+                                        <ListBoxItem>
+                                            <CheckBox x:Name="HSysDelCheckBox2" Content="R00"></CheckBox>
+                                        </ListBoxItem>
+                                        <ListBox.Style>
+                                            <Style TargetType="ListBox">
+                                                <Setter Property="IsEnabled" Value="false" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding ElementName=PhDelCheckBox, Path=IsChecked}" Value="True">
+                                                        <Setter Property="IsEnabled" Value="true" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </ListBox.Style>
+                                    </ListBox>
+                                    <ListBox x:Name="LSysDelListBox" Grid.Column="2" HorizontalAlignment="Center" VerticalAlignment="Top">
+                                        <ListBoxItem>
+                                            <CheckBox x:Name="LSysDelCheckBox1" Content="DR0" VerticalAlignment="Center"/>
+                                        </ListBoxItem>
+                                        <ListBoxItem>
+                                            <CheckBox x:Name="LSysDelCheckBox2" Content="ER0"></CheckBox>
+                                        </ListBoxItem>
+                                        <ListBoxItem>
+                                            <CheckBox x:Name="LSysDelCheckBox3" Content="FR0"></CheckBox>
+                                        </ListBoxItem>
+                                        <ListBox.Style>
+                                            <Style TargetType="ListBox">
+                                                <Setter Property="IsEnabled" Value="false" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding ElementName=PlDelCheckBox, Path=IsChecked}" Value="True">
+                                                        <Setter Property="IsEnabled" Value="true" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </ListBox.Style>
+                                    </ListBox>
+                                    <ListBox x:Name="KSysDelListBox" Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Top">
+                                        <ListBoxItem>
+                                            <CheckBox x:Name="KSysDelCheckBox" Content="Y01" VerticalAlignment="Center"/>
+                                        </ListBoxItem>
+                                        <ListBox.Style>
+                                            <Style TargetType="ListBox">
+                                                <Setter Property="IsEnabled" Value="false" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding ElementName=PkDelCheckBox, Path=IsChecked}" Value="True">
+                                                        <Setter Property="IsEnabled" Value="true" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </ListBox.Style>
+                                    </ListBox>
+                                </Grid>
+                                <Button x:Name="DelButton" Grid.Row="6" Content="Bestätigen" HorizontalAlignment="Center" VerticalAlignment="Bottom" Click="DelButton_Click"></Button>
+                            </Grid>
+                        </Border>
+                        <Border Grid.Row="1" BorderBrush="Black" BorderThickness="1" Margin="0,5,0,5">
+                            <Grid x:Name="MassProcessingGrid" Margin="5,0,5,5">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="20"/>
+                                    <RowDefinition Height="20"/>
+                                    <RowDefinition Height="20"/>
+                                    <RowDefinition Height="20"/>
+                                    <RowDefinition Height="20"/>
+                                    <RowDefinition Height="20"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition />
+                                </Grid.RowDefinitions>
+                                <TextBlock Text="Massenbearbeitung" SnapsToDevicePixels="True" HorizontalAlignment="Center" FontWeight="Bold" Grid.ColumnSpan="3"/>
+                                <Grid Grid.Row="1">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="50" />
+                                        <ColumnDefinition />
+                                        <ColumnDefinition />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="Attribut" HorizontalAlignment="Center"/>
+                                    <TextBlock Grid.Column ="1" Text="aktueller Wert" HorizontalAlignment="Center"/>
+                                    <TextBlock Grid.Column="2" Text="neuer Wert" HorizontalAlignment="Center"/>
+                                </Grid>
+                                <uc:AttributeEditUserControl x:Name="AttributeEditRow01" Grid.Row="2"/>
+                                <uc:AttributeEditUserControl x:Name="AttributeEditRow02" Grid.Row="3"/>
+                                <uc:AttributeEditUserControl x:Name="AttributeEditRow03" Grid.Row="4"/>
+                                <uc:AttributeEditUserControl x:Name="AttributeEditRow04" Grid.Row="5"/>
+                                <uc:AttributeEditUserControl x:Name="AttributeEditRow05" Grid.Row="6"/>
+                                <uc:AttributeEditUserControl x:Name="AttributeEditRow06" Grid.Row="7"/>
+                                <uc:AttributeEditUserControl x:Name="AttributeEditRow07" Grid.Row="8"/>
+                                <uc:AttributeEditUserControl x:Name="AttributeEditRow08" Grid.Row="9"/>
+                                <uc:AttributeEditUserControl x:Name="AttributeEditRow09" Grid.Row="10"/>
+                                <uc:AttributeEditUserControl x:Name="AttributeEditRow10" Grid.Row="11"/>
+                                <uc:AttributeEditUserControl x:Name="AttributeEditRow11" Grid.Row="12"/>
+                                <uc:AttributeEditUserControl x:Name="AttributeEditRow12" Grid.Row="13"/>
+                                <uc:AttributeEditUserControl x:Name="AttributeEditRow13" Grid.Row="14"/>
+                                <DockPanel Grid.Row="15" Grid.Column="0" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="15,0,0,0" IsEnabled="False"/>
+                                <DockPanel LastChildFill="False" VerticalAlignment="Center" HorizontalAlignment="Right" Grid.Row="15" Margin="0,0,15,0" IsEnabled="False"/>
+                                <Button x:Name="MassEditButton" Grid.Row="16" Content="Bestätigen" HorizontalAlignment="Center" VerticalAlignment="Center" Click="MassEditButton_Click"></Button>
+                            </Grid>
+                        </Border>
+                    </Grid>
+                </Grid>
+            </TabItem>
+            <TabItem x:Name="ImportTabItem" Header="Import" HorizontalAlignment="Right" Width="52" Margin="0,0,0,0">
+                <Grid Background="#FFE5E5E5">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition/>
+                    </Grid.RowDefinitions>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="226*"/>
+                        <ColumnDefinition Width="811*"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto">
+                            <ColumnDefinition.Style>
+                                <Style TargetType="ColumnDefinition">
+                                    <Setter Property="MinWidth" Value="0" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding ElementName=FilterExpander, Path=IsExpanded}" Value="True">
+                                            <Setter Property="MinWidth" Value="290" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </ColumnDefinition.Style>
+                        </ColumnDefinition>
+                    </Grid.ColumnDefinitions>
+                    <Grid x:Name="ImportTables" Margin="10" Grid.RowSpan="2" Grid.ColumnSpan="2">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="56*" MinHeight="300"/>
+                            <RowDefinition Height="21*"/>
+                        </Grid.RowDefinitions>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="140*"/>
+                            <ColumnDefinition Width="100*"/>
+                            <ColumnDefinition Width="100*"/>
+                            <ColumnDefinition Width="250*"/>
+                        </Grid.ColumnDefinitions>
+                        <Grid Grid.Row="1" Grid.Column="0">
+                            <GroupBox Header="Ausgewählte Punkte" Margin="10,0,0,25" VerticalAlignment="Bottom" HorizontalAlignment="Left" Height="145" Width="215">
+                                <Grid>
+                                    <Button Content="Ausgewählte Datensätze löschen"  Margin="0,10,0,0" Height="35" VerticalAlignment="Top" HorizontalAlignment="Center" Width="190" Click="AusgewählteDatensätzeLöschenButton_Click"/>
+                                    <Button Content="Alles löschen" HorizontalAlignment="Center" Margin="00,10,0,10" VerticalAlignment="Bottom" Height="35" Width="163" Click="LöschenButton_Click"/>
+
+                                </Grid>
+                            </GroupBox>
+                        </Grid>
+                        <Grid Grid.Row="1" Grid.Column="1">
+                            <GroupBox Header="Daten ersetzen" Margin="0,0,0,25" HorizontalAlignment="Center" VerticalAlignment="Bottom" Width="140" Height="145" Grid.Column="1">
+                                <Grid>
+                                    <Label Content="Aktueller PArt:" HorizontalAlignment="Left" VerticalAlignment="Top" Height="25" Width="86" Margin="5,0,0,0" />
+                                    <TextBox x:Name="AktuellePArtTextBox" HorizontalAlignment="Left" Margin="5,25,0,0"  TextWrapping="Wrap" VerticalAlignment="Top" Width="120" />
+                                    <Label Content="Neuer PArt:" HorizontalAlignment="Left" Margin="5,40,0,0" VerticalAlignment="Top" Height="25" Width="86"/>
+                                    <TextBox x:Name="NeuerPArtTextBox" HorizontalAlignment="Left" Margin="5,65,0,0"  TextWrapping="Wrap" VerticalAlignment="Top" Width="120"/>
+                                    <Button x:Name="PArt2ErsetzenButoon" Content="Ersetzen" HorizontalAlignment="Center" Margin="0,95,0,0" VerticalAlignment="Top" Click="PArtErsetzenButoon_Click"/>
+
+                                </Grid>
+                            </GroupBox>
+                        </Grid>
+                        <Grid Grid.Row="1" Grid.Column="2">
+                            <GroupBox Header="Speichern im Datenbank" Margin="0,0,0,25" HorizontalAlignment="Left" Width="150" Height="145" VerticalAlignment="Bottom" Grid.Column="2">
+                                <Grid>
+                                    <Button x:Name="SpeichernButton" Content="Speichern" HorizontalAlignment="Center" Margin="0,20,0,0" VerticalAlignment="Top" Height="37" Width="100" Click="SpeichernButton_Click" RenderTransformOrigin="0.702,0.978"/>
+                                </Grid>
+                            </GroupBox>
+                        </Grid>
+                        <Grid Grid.Row="1" Grid.Column="3">
+                            <GroupBox Header="Skizzen" HorizontalAlignment="Left" Height="145" Margin="0,0,0,25" VerticalAlignment="Bottom" Width="350" Grid.Column="2" >
+                                <Grid Height="125">
+                                    <Button Content="Skizzen importieren" HorizontalAlignment="Left" Margin="10,15,0,0" VerticalAlignment="Top" Width="163" Height="35" Click="SkizzenImportButton_Click"/>
+                                    <Button x:Name="HauptdatenbestanPrüfenButton" Content="Hauptdatenbestand prüfen" HorizontalAlignment="Left" Margin="10,0,0,13" VerticalAlignment="Bottom" Height="35" Width="163" Click="HauptdatenbestandPrüfenButton_Click"/>
+                                    <Label Content="Skizzen erzeugen" HorizontalAlignment="Left" Margin="193,10,0,0" VerticalAlignment="Top" Width="150"/>
+                                    <Button x:Name="SkizzenSpeichernButton" Content="Skizzen speichern" HorizontalAlignment="Left" Margin="193,0,0,13" VerticalAlignment="Bottom" Height="35" Width="120" Click="SkizzenSpeichernButton_Click"/>
+                                    <CheckBox x:Name="JPGCheckBox" Content="JPG" HorizontalAlignment="Left" Margin="272,43,0,0" VerticalAlignment="Top" Checked="JPGCheckBox_Checked" RenderTransformOrigin="-0.115,-0.613"/>
+                                    <CheckBox x:Name="PDFCheckBox" Content="PDF" HorizontalAlignment="Left" Margin="193,43,0,0" VerticalAlignment="Top" Checked="PDFCheckBox_Checked"/>
+                                </Grid>
+                            </GroupBox>
+                        </Grid>
+                        <Grid Grid.Column="4">
+
+                        </Grid>
+                        <Grid Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="4">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="33*"/>
+                                <ColumnDefinition Width="100*"/>
+                                <ColumnDefinition Width="1000*"/>
+                                <ColumnDefinition Width="500*"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="40"/>
+                                <RowDefinition Height="20"/>
+                                <RowDefinition/>
+                                <RowDefinition Height="22"/>
+                            </Grid.RowDefinitions>
+
+                            <DockPanel Grid.ColumnSpan="3" Grid.Row="1">
+                                <ComboBox x:Name="ImportTablesComboBox" HorizontalAlignment="Left" Margin="0,0,0,0" VerticalAlignment="Top" Width="84" DropDownClosed="ProtoTablesComboBox_DropDownClosed" Grid.ColumnSpan="3" BorderBrush="Black">
+                                    <ComboBoxItem x:Name="ImportTabellepp" Content="Tabelle PP" IsSelected="True"/>
+                                    <ComboBoxItem x:Name="ImportTabelleph" Content="Tabelle PH" />
+                                    <ComboBoxItem x:Name="ImportTabellepk" Content="Tabelle PK" />
+                                    <ComboBoxItem x:Name="ImportTabellepl" Content="Tabelle PL" />
+                                    <ComboBoxItem x:Name="ImportTabelleps" Content="Tabelle PS" />
+                                </ComboBox>
+                            </DockPanel>
+                            <Label Content="Path: " Grid.Column="1" Margin="0,0,0,0" RenderTransformOrigin="0.024,-0.095" Height="26"/>
+                            <TextBox x:Name="importTextBox" Grid.Column="2" Margin="0,0,0,0" TextWrapping="Wrap" Width="540" Height="20"/>
+                            <Button x:Name="importButton" Content="Import" HorizontalAlignment="Left" Height="19" Margin="0,0,0,0" Width="75"  Click="ImportButton_Click" Grid.Column="3" />
+                            <DataGrid x:Name="importDatagrid" Grid.Row="2" Margin="0,0,2,22" ColumnWidth="*"  
+                                      SelectedCellsChanged="ImportDataGrid_SelectedCellsChanged" AutoGeneratingColumn="importDatagrid_AutoGeneratingColumn" 
+                                      Grid.ColumnSpan="3" Grid.RowSpan="2" SelectionChanged="importDatagrid_SelectionChanged" />
+                            <DataGrid x:Name="SkizzenImportDatagrid" Grid.Row="2" Grid.RowSpan="2" Margin="2,0,0,22" ColumnWidth="*" AutoGenerateColumns="True"
+                                      SelectionChanged="SkizzenImportDataGrid_SelectionChanged" Grid.Column="3" />
+                            <RadioButton x:Name="HauptdatenbestandRadioButton" Content="Hauptdatenbestand" Grid.Column="3" Grid.Row="1" Margin="0,0,0,0" HorizontalAlignment="Right" Height="15" Width="100" FontSize="9" Checked="HauptdatenbestandRadioButton_Checked"/>
+                            <RadioButton x:Name="ArbeitsauftragRadioButton" Content="Arbeitsauftrag" Grid.Column="3" Grid.Row="1"  Margin="0,0,0,0" FontSize="9" Width="80" Height="15" Checked="ArbeitsauftragRadioButton_Checked"/>
+                        </Grid>
+                    </Grid>
+                    <Expander x:Name="ImportFilterExpander" HorizontalAlignment="Center" VerticalAlignment="Center" IsExpanded="True" Grid.Column="3" Header=" Filter">
+                        <Grid VerticalAlignment="Top" HorizontalAlignment="Right" MinWidth="250">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="250*"/>
+                                <RowDefinition Height="1000*"/>
+                                <RowDefinition Height="130*"/>
+                            </Grid.RowDefinitions>
+                            <Grid Visibility="Visible" IsEnabled="True">
+                                <UniformGrid x:Name="ImportFilterGrid" Background="#FFC6C1C1" VerticalAlignment="Top" HorizontalAlignment="Center" Rows="6" Height="161" Width="260" >
+                                    <DockPanel Margin="3,0,3,0">
+                                        <DockPanel HorizontalAlignment="Center" VerticalAlignment="Center" Margin="3,0,0,0">
+                                            <TextBlock TextWrapping="Wrap" Text="PAD:" Margin="0,0,7,0" FontWeight="Normal"/>
+                                            <TextBox x:Name="ImportPadInput" TextWrapping="Wrap" DockPanel.Dock="Left" MinWidth="50" TextChanged="PadInput_TextChanged"/>
+                                            <Image ToolTip="Die Tabelle wird nach mindestens 4 Ziffern durch PAD gefiltert." DockPanel.Dock="Right" HorizontalAlignment="Center" Source="/resources/info.png" Stretch="Fill" Width="12" VerticalAlignment="Top"/>
+                                        </DockPanel>
+                                        <DockPanel DockPanel.Dock="Right" HorizontalAlignment="Right" VerticalAlignment="Center">
+                                            <TextBlock TextWrapping="Wrap" DockPanel.Dock="Left" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="0,0,14,0"><Run Text="Punktart:"/></TextBlock>
+                                            <ComboBox x:Name="ImportStatusSelection" DockPanel.Dock="Left" IsDropDownOpen="False" Width="50" HorizontalAlignment="Left" VerticalAlignment="Center"  DropDownClosed="StatusSelection_DropDownClosed">
+                                                <ComboBoxItem Content="PS0"/>
+                                                <ComboBoxItem Content="PS1"/>
+                                                <ComboBoxItem Content="PS2"/>
+                                                <ComboBoxItem Content="PS3"/>
+                                                <ComboBoxItem Content="PS4"/>
+                                                <ComboBoxItem Content="Alle"/>
+                                            </ComboBox>
+                                        </DockPanel>
+                                    </DockPanel>
+                                    <UniformGrid Columns="3" Margin="3,0,3,0">
+                                        <DockPanel>
+                                            <TextBlock TextWrapping="Wrap" HorizontalAlignment="Left" VerticalAlignment="Center" ><Run Text="Blattschnitt:"/></TextBlock>
+                                            <Image ToolTip="Die Tabelle wird erst durch Blattschnitt gefiltert, wenn die Eingabe korrekt formatiert ist (z.B. 1122DB)." HorizontalAlignment="Left" Source="/resources/info.png" Stretch="Fill" Width="12" VerticalAlignment="Top"/>
+                                        </DockPanel>
+                                        <DockPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                                            <TextBlock TextWrapping="Wrap" Text="von" Margin="0,0,7,0"/>
+                                            <TextBox x:Name="ImportSectionInputFrom" TextWrapping="Wrap" DockPanel.Dock="Right" MinWidth="50" MaxLength="6" TextChanged="SectionInputFrom_TextChanged"/>
+                                        </DockPanel>
+                                        <DockPanel LastChildFill="False" VerticalAlignment="Center" HorizontalAlignment="Right">
+                                            <TextBlock TextWrapping="Wrap" Text="bis" Margin="0,0,7,0"/>
+                                            <TextBox x:Name="ImportSectionInputTo" TextWrapping="Wrap" DockPanel.Dock="Right" MinWidth="50" TextChanged="SectionInputTo_TextChanged" MaxLength="6"/>
+                                        </DockPanel>
+                                    </UniformGrid>
+                                    <Grid Margin="3,0,3,0">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="91*"/>
+                                            <ColumnDefinition Width="92*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <DockPanel>
+                                            <TextBlock TextWrapping="Wrap" HorizontalAlignment="Left" VerticalAlignment="Center" Text="Punktnr.:"/>
+                                            <Image ToolTip="Die Tabelle wird durch Punktnr. gefiltert, indem Sie die OK-Taste drücken." HorizontalAlignment="Left" Source="/resources/info.png" Stretch="Fill" Width="15" VerticalAlignment="Top"/>
+                                        </DockPanel>
+                                        <DockPanel Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,0,0,0">
+                                            <TextBlock TextWrapping="Wrap" Text="von" Margin="0,0,7,0"/>
+                                            <TextBox x:Name="ImportNumberInputFrom" TextWrapping="Wrap" DockPanel.Dock="Right" MinWidth="50" MaxLength="5"/>
+                                        </DockPanel>
+                                        <DockPanel Grid.Column="2" LastChildFill="False" VerticalAlignment="Center" HorizontalAlignment="Right">
+                                            <TextBlock TextWrapping="Wrap" Text="bis" Margin="0,0,7,0"/>
+                                            <TextBox x:Name="ImportNumberInputTo" TextWrapping="Wrap" DockPanel.Dock="Left" MinWidth="50" MaxLength="5" VerticalAlignment="Center"/>
+                                            <Button x:Name="ImportNumberFilterConfirmButton" DockPanel.Dock="Right" Content="OK" VerticalAlignment="Center" HorizontalAlignment="Center" Click="NumberFilterConfirmButton_Click" Width="20" Margin="10,0,0,0"/>
+                                        </DockPanel>
+                                    </Grid>
+                                    <DockPanel LastChildFill="False">
+                                        <DockPanel HorizontalAlignment="Center" VerticalAlignment="Center" Margin="3,0,0,0">
+                                            <TextBlock TextWrapping="Wrap" Text="Strecke:" Margin="0,0,7,0"/>
+                                            <TextBox x:Name="ImportLineInput" TextWrapping="Wrap" DockPanel.Dock="Right" MinWidth="50" TextChanged="LineInput_TextChanged" IsEnabled="False"/>
+                                        </DockPanel>
+                                        <DockPanel HorizontalAlignment="Right" VerticalAlignment="Center" DockPanel.Dock="Right" Margin="0,0,3,0">
+                                            <TextBlock TextWrapping="Wrap" Text="Auftrag:" Margin="0,0,7,0"/>
+                                            <TextBox x:Name="ImportContractInput" TextWrapping="Wrap" DockPanel.Dock="Right" MinWidth="50" HorizontalAlignment="Right" VerticalAlignment="Center" TextChanged="ContractInput_TextChanged"/>
+                                        </DockPanel>
+                                    </DockPanel>
+                                    <UniformGrid Columns="3" Margin="3,0,3,0">
+                                        <TextBlock TextWrapping="Wrap" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="0,0,14,0"><Run Text="Kilometer:"/></TextBlock>
+                                        <DockPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                                            <TextBlock TextWrapping="Wrap" Text="von" Margin="0,0,7,0"/>
+                                            <TextBox x:Name="ImportKmInputFrom" TextWrapping="Wrap" DockPanel.Dock="Right" MinWidth="50" TextChanged="KmInputFrom_TextChanged" IsEnabled="False"/>
+                                        </DockPanel>
+                                        <DockPanel LastChildFill="False" VerticalAlignment="Center" HorizontalAlignment="Right">
+                                            <TextBlock TextWrapping="Wrap" Text="bis" Margin="0,0,7,0"/>
+                                            <TextBox x:Name="ImportKmInputTo" TextWrapping="Wrap" DockPanel.Dock="Right" MinWidth="50" TextChanged="KmInputTo_TextChanged" IsEnabled="False"/>
+                                        </DockPanel>
+                                    </UniformGrid>
+                                    <Button x:Name="ImportFilterResetButton" Content="Zurücksetzen" Click="FilterResetButton_Click" Width="74" HorizontalAlignment="Center"/>
+                                </UniformGrid>
+                            </Grid>
+                            <Grid x:Name="ImportDataSheetDisplay" Grid.Row="1" Margin="0,40,0,0"
+                                  ScrollViewer.VerticalScrollBarVisibility="Auto" ScrollViewer.HorizontalScrollBarVisibility="Auto">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+                                <Image x:Name="ImportJpgDisplay" ScrollViewer.VerticalScrollBarVisibility="Disabled" Margin="0,0,0,0"/>
+                                <WebBrowser x:Name="ImportPdfDisplay" MinWidth="300" ScrollViewer.VerticalScrollBarVisibility="Disabled" Visibility="Collapsed" Margin="0,0,0,0"/>
+                            </Grid>
+                        </Grid>
+                    </Expander>
+                    <GridSplitter HorizontalAlignment="Center" Grid.Column="2" Grid.Row="0"
+                                  Grid.RowSpan="2" Width="5"/>
+                </Grid>
+            </TabItem>
+            <TabItem x:Name="ProtoTabItem" Header="Export" HorizontalAlignment="Center" Width="54" Height="20" VerticalAlignment="Top">
+                <!--MouseLeftButtonUp="ViewTabItem_MouseLeftButtonUp"-->
+                <Grid Background="#FFE5E5E5">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition/>
+                    </Grid.RowDefinitions>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto">
+                            <ColumnDefinition.Style>
+                                <Style TargetType="ColumnDefinition">
+                                    <Setter Property="MinWidth" Value="0" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding ElementName=FilterExpander, Path=IsExpanded}" Value="True">
+                                            <Setter Property="MinWidth" Value="290" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </ColumnDefinition.Style>
+                        </ColumnDefinition>
+                    </Grid.ColumnDefinitions>
+                    <Grid x:Name="ProtoTables" Margin="10" Grid.RowSpan="3">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="56*" MinHeight="300"/>
+                            <RowDefinition Height="21*"/>
+                        </Grid.RowDefinitions>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="160*"/>
+                            <ColumnDefinition Width="160*"/>
+                            <ColumnDefinition Width="160*"/>
+                            <ColumnDefinition Width="160*"/>
+                        </Grid.ColumnDefinitions>
+                        <Grid Grid.Row="1" Grid.Column="0">
+                            <Rectangle HorizontalAlignment="Left" Height="140" Margin="0,20,0,0" Width="200" Stroke="Gray" Fill="#FFE5E5E5" VerticalAlignment="Top"/>
+                            <TextBox HorizontalAlignment="Left" Margin="10,10,0,0" Text=" Exportformate" TextWrapping="Wrap" VerticalAlignment="Top" Width="100" Background="#FFE5E5E5" BorderBrush="#FFE5E5E5" IsReadOnly="True"/>
+                            <CheckBox x:Name="dbbCheckBox" Content="dbb-Format" HorizontalAlignment="Left" Margin="30,35,0,0" Height="15" VerticalAlignment="Top" Checked="dbbCheckBox_Checked" Unchecked="dbbCheckBox_Unchecked"/>
+                            <CheckBox x:Name="csvCheckBox" Content="csv-Format"  HorizontalAlignment="Left" Margin="30,55,0,0" VerticalAlignment="Top" Checked="csvCheckBox_Checked" Unchecked="csvCheckBox_Unchecked"/>
+                            <CheckBox x:Name="napCheckBox" Content="nap-Format" HorizontalAlignment="Left" Margin="30,75,0,0" Height="15" VerticalAlignment="Top" Checked="napCheckBox_Checked" Unchecked="napCheckBox_Unchecked"/>
+                            <CheckBox x:Name="xlsCheckBox" Content="xls-Format" HorizontalAlignment="Left" Margin="30,95,0,0" Height="15" VerticalAlignment="Top" Checked="xlsCheckBox_Checked" Unchecked="xlsCheckBox_Unchecked"/>
+                            <CheckBox x:Name="xlsEinfachCheckBox" Content="xls-Format (Einfach)" HorizontalAlignment="Left" Margin="30,115,0,0" Height="15" VerticalAlignment="Top" Checked="xlsEinfachCheckBox_Checked" Unchecked="xlsEinfachCheckBox_Unchecked"/>
+                            <CheckBox x:Name="xlsAutoCheckBox" Content="xls-Format (AutoDat)" HorizontalAlignment="Left" Margin="30,135,0,0" Height="15" VerticalAlignment="Top" Checked="xlsAutoCheckBox_Checked" Unchecked="xlsAutoCheckBox_Unchecked"/>
+                        </Grid>
+                        <Grid x:Name="GridTableCheckBox" Grid.Row="1" Grid.Column="1" Visibility="Hidden">
+                            <Rectangle HorizontalAlignment="Left" Height="140" Margin="0,20,0,0" Width="200" Stroke="Gray" Fill="#FFE5E5E5" VerticalAlignment="Top"/>
+                            <TextBox HorizontalAlignment="Left" Margin="10,10,0,0" Text=" Auswahl Tabellen" TextWrapping="Wrap" VerticalAlignment="Top" Width="110" Background="#FFE5E5E5" BorderBrush="#FFE5E5E5" IsReadOnly="True"/>
+                            <CheckBox x:Name="PPCheckBox" Content="PP" HorizontalAlignment="Left" Margin="30,40,0,0" Height="15" VerticalAlignment="Top"/>
+                            <CheckBox x:Name="PHCheckBox" Content="PH" HorizontalAlignment="Left" Margin="30,60,0,0" Height="15" VerticalAlignment="Top"/>
+                            <CheckBox x:Name="PKCheckBox" Content="PK" HorizontalAlignment="Left" Margin="30,80,0,0" Height="15" VerticalAlignment="Top"/>
+                            <CheckBox x:Name="PLCheckBox" Content="PL"  HorizontalAlignment="Left" Margin="30,100,0,0" Height="15" VerticalAlignment="Top"/>
+                            <CheckBox x:Name="PSCheckBox" Content="PS"  HorizontalAlignment="Left" Margin="30,120,0,0" Height="15" VerticalAlignment="Top"/>
+                        </Grid>
+                        <Grid Grid.Row="1" Grid.Column="2">
+                            <Rectangle HorizontalAlignment="Left" Height="140" Margin="0,20,0,0" Width="230" Stroke="Gray" Fill="#FFE5E5E5" VerticalAlignment="Top"/>
+                            <TextBox HorizontalAlignment="Left" Margin="10,10,0,0" Text=" Skizzen Export" TextWrapping="Wrap" VerticalAlignment="Top" Width="100" Background="#FFE5E5E5" BorderBrush="#FFE5E5E5" IsReadOnly="True"/>
+                            <TextBox x:Name ="skizzenExportBox" HorizontalAlignment="Left" VerticalAlignment="Top" Width="160" Margin="15,49,0,0"/>
+                            <Button x:Name="skizzenExportButton" Content="...." HorizontalAlignment="Left" VerticalAlignment="Top" Margin="185,49,0,0" Height="18" Width="30" Click="skizzenExportButton_Click"/>
+                            <CheckBox x:Name="pdfExportCheckBox" Content=".pdf-Skizze" HorizontalAlignment="Left" Margin="30,80,0,0" Height="15" VerticalAlignment="Top"/>
+                            <CheckBox x:Name="jpgExportCheckBox" Content=".jpg-Skizze" HorizontalAlignment="Left" Margin="30,100,0,0" Height="15" VerticalAlignment="Top"/>
+                            <CheckBox x:Name="pptExportCheckBox" Content=".ppt-Skizze" HorizontalAlignment="Left" Margin="30,120,0,0" Height="15" VerticalAlignment="Top"/>
+                        </Grid>
+                        <Grid Grid.Row="1" Grid.Column="3">
+                            <Rectangle HorizontalAlignment="Left" Height="140" Margin="0,20,0,0" Width="200" Stroke="Gray" Fill="#FFE5E5E5" VerticalAlignment="Top"/>
+                            <TextBox HorizontalAlignment="Left" Margin="10,10,0,0" Text=" Dateinamen auswählen" TextWrapping="Wrap" VerticalAlignment="Top" Width="140" Background="#FFE5E5E5" BorderBrush="#FFE5E5E5" IsReadOnly="True"/>
+                            <TextBox x:Name ="inputExportBox" HorizontalAlignment="Left" VerticalAlignment="Top" Width="160" Margin="15,49,69,0"/>
+                        </Grid>
+                        <Grid Grid.Column="4">
+
+                        </Grid>
+                        <Grid Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="4" x:Name="ProtoPpTablePanel">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="33*"/>
+                                <ColumnDefinition Width="241*"/>
+                                <ColumnDefinition Width="952*"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="20"/>
+                                <RowDefinition/>
+                                <RowDefinition Height="22"/>
+                            </Grid.RowDefinitions>
+                            <DockPanel Grid.ColumnSpan="3">
+                                <ComboBox x:Name="ProtoTablesComboBox" HorizontalAlignment="Left" Margin="0,0,0,0" VerticalAlignment="Top" Width="84" DropDownClosed="ProtoTablesComboBox_DropDownClosed" Grid.ColumnSpan="3" BorderBrush="Black">
+                                    <ComboBoxItem x:Name="Tabellepp" Content="Tabelle PP" IsSelected="True"/>
+                                    <ComboBoxItem x:Name="Tabelleph" Content="Tabelle PH" />
+                                    <ComboBoxItem x:Name="Tabellepk" Content="Tabelle PK" />
+                                    <ComboBoxItem x:Name="Tabellepl" Content="Tabelle PL" />
+                                    <ComboBoxItem x:Name="Tabelleps" Content="Tabelle PS" />
+                                </ComboBox>
+                            </DockPanel>
+                            <DataGrid Grid.Row="1" x:Name="ProtoPpTable" AutoGenerateColumns="True"
+                                      AutoGeneratingColumn="ProtoTable_OnAutoGeneratingColumn" Visibility="Visible"
+                                      ColumnWidth="*" SelectionMode="Extended" IsReadOnly="True" Grid.ColumnSpan="3" Margin="0,0,0,22" Grid.RowSpan="2"/>
+                            <Border Grid.Row="2" BorderThickness="0,0,0,1" BorderBrush="Gray" Grid.ColumnSpan="3">
+                                <DockPanel DockPanel.Dock="Bottom" HorizontalAlignment="Stretch" VerticalAlignment="Bottom" LastChildFill="False">
+                                    <TextBlock x:Name="ProtoEntryCountTextBlock" FontStyle="Italic" VerticalAlignment="Center"/>
+                                    <TextBlock Text=" Einträge" VerticalAlignment="Center" FontStyle="Italic"/>
+                                </DockPanel>
+                            </Border>
+                            <DataGrid Grid.Row="1" x:Name="ProtoPlTable" AutoGenerateColumns="True"
+                                      AutoGeneratingColumn="ProtoTable_OnAutoGeneratingColumn" Visibility="Hidden"
+                                      ColumnWidth="*" SelectionMode="Extended" IsReadOnly="True" Grid.ColumnSpan="3" Margin="0,0,0,22" Grid.RowSpan="2"/>
+                            <DataGrid Grid.Row="1" x:Name="ProtoPhTable" AutoGenerateColumns="True"
+                                      AutoGeneratingColumn="ProtoTable_OnAutoGeneratingColumn" Visibility="Hidden"
+                                      ColumnWidth="*" SelectionMode="Extended" IsReadOnly="True" Grid.ColumnSpan="3" Margin="0,0,0,22" Grid.RowSpan="2"/>
+                            <DataGrid Grid.Row="1" x:Name="ProtoPsTable" AutoGenerateColumns="True"
+                                      AutoGeneratingColumn="ProtoTable_OnAutoGeneratingColumn" Visibility="Hidden"
+                                      ColumnWidth="*" SelectionMode="Extended" IsReadOnly="True" Grid.ColumnSpan="3" Margin="0,0,0,22" Grid.RowSpan="2"/>
+                            <DataGrid Grid.Row="1" x:Name="ProtoPkTable" AutoGenerateColumns="True"
+                                      AutoGeneratingColumn="ProtoTable_OnAutoGeneratingColumn" Visibility="Hidden"
+                                      ColumnWidth="*" SelectionMode="Extended" IsReadOnly="True" Grid.ColumnSpan="3" Margin="0,0,0,22" Grid.RowSpan="2"/>
+                        </Grid>
+                    </Grid>
+                    <Expander x:Name="ProtoFilterExpander" HorizontalAlignment="Right" VerticalAlignment="Top" IsExpanded="True" Grid.Column="2" Header=" Filter">
+                        <Grid VerticalAlignment="Top" HorizontalAlignment="Right" MinWidth="250">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="250*"/>
+                                <RowDefinition Height="130*"/>
+                                <RowDefinition Height="130*"/>
+                            </Grid.RowDefinitions>
+                            <Grid x:Name="ProtoFilterGridPP" Visibility="Visible" IsEnabled="True">
+                                <Rectangle HorizontalAlignment="Left" Height="200" Margin="10,20,0,0" Width="200" Stroke="Gray" Fill="#FFE5E5E5" VerticalAlignment="Top"/>
+                                <TextBox HorizontalAlignment="Left" Margin="20,10,0,0" Text=" Filter PP" FontWeight="Bold" TextWrapping="Wrap" VerticalAlignment="Top" Width="100" Background="#FFE5E5E5" BorderBrush="#FFE5E5E5" IsReadOnly="True"/>
+                                <TextBlock Text="Strecke:" Margin="20,40,0,0"/>
+                                <TextBlock Text="KM" Margin="20,60,0,0"/>
+                                <TextBlock Text="von:" Margin="55,60,0,0"/>
+                                <TextBlock Text="bis:" Margin="55,80,0,0"/>
+                                <TextBlock Text="Fangrad. 1 :" Margin="20,113,0,0"/>
+                                <TextBlock Text="Fangrad. 2 :" Margin="20,133,0,0"/>
+                                <TextBlock Text="PS0" Margin="21,167,0,0"/>
+                                <TextBlock Text="PS1" Margin="51,167,0,0"/>
+                                <TextBlock Text="PS2" Margin="81,167,0,0"/>
+                                <TextBlock Text="PS3" Margin="111,167,0,0"/>
+                                <TextBlock Text="PS4" Margin="141,167,0,0"/>
+                                <TextBox x:Name="Strecke" HorizontalAlignment="Left" Margin="100,40,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="60" BorderBrush="#FFE5E5E5" TextChanged="PADFilter_TextChanged"/>
+                                <TextBox x:Name="KMvonPP" HorizontalAlignment="Left" Margin="100,60,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="60" BorderBrush="#FFE5E5E5" TextChanged="PArtFilter_TextChanged"/>
+                                <TextBox x:Name="KMbisPP" HorizontalAlignment="Left" Margin="100,80,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="60" BorderBrush="#FFE5E5E5" TextChanged="BlattschnittFilter_TextChanged"/>
+                                <TextBox x:Name="FangradiusPS0toPs1" HorizontalAlignment="Left" Margin="100,110,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="60" BorderBrush="#FFE5E5E5" TextChanged="FangradiusPS0toPs1_TextChanged" Text="8000" IsEnabled="{Binding IsChecked, ElementName=Fangradius1Checkbox}"/>
+                                <TextBox x:Name="FangradiusPS2toPS4" HorizontalAlignment="Left" Margin="100,130,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="60" BorderBrush="#FFE5E5E5" TextChanged="FangradiusPS2toPS4_TextChanged" Text="700" IsEnabled="{Binding IsChecked, ElementName=Fangradius2Checkbox}"/>
+                                <Button x:Name="FilterButton" Margin="75,173,0,0" Content="Filtern" HorizontalAlignment="Left"  VerticalAlignment="Center" Width="60" Height="20" FontSize="12" FontWeight="Normal" Click="FilterButton_Click"/>
+                                <CheckBox x:Name="Fangradius1Checkbox" Content="" HorizontalAlignment="Left" Margin="84,113,0,0" VerticalAlignment="Top"/>
+                                <CheckBox x:Name="Fangradius2Checkbox" Content="" HorizontalAlignment="Left" Margin="84,133,0,0" VerticalAlignment="Top"/>
+                                <CheckBox x:Name="PS0check" Content="" HorizontalAlignment="Left" Margin="25,155,0,0" VerticalAlignment="Top" IsChecked="True" Checked="PS0check_Checked"/>
+                                <CheckBox x:Name="PS1check" Content="" HorizontalAlignment="Left" Margin="55,155,0,0" VerticalAlignment="Top" IsChecked="True"/>
+                                <CheckBox x:Name="PS2check" Content="" HorizontalAlignment="Left" Margin="85,155,0,0" VerticalAlignment="Top" IsChecked="True"/>
+                                <CheckBox x:Name="PS3check" Content="" HorizontalAlignment="Left" Margin="115,155,0,0" VerticalAlignment="Top" IsChecked="True"/>
+                                <CheckBox x:Name="PS4check" Content="" HorizontalAlignment="Left" Margin="145,155,0,0" VerticalAlignment="Top" IsChecked="True"/>
+                            </Grid>
+                            <Grid x:Name="ProtoFilterGridPL" Visibility="Hidden" IsEnabled="False">
+                                <Rectangle HorizontalAlignment="Left" Height="120" Margin="10,20,0,0" Width="200" Stroke="Gray" Fill="#FFE5E5E5" VerticalAlignment="Top"/>
+                                <TextBox HorizontalAlignment="Left" Margin="20,10,0,0" Text=" Filter PL" FontWeight="Bold" TextWrapping="Wrap" VerticalAlignment="Top" Width="100" Background="#FFE5E5E5" BorderBrush="#FFE5E5E5" IsReadOnly="True"/>
+                                <CheckBox x:Name="ER0Checkbox" Content="ER0 (4.Streifen DB REF)" HorizontalAlignment="Left" Margin="30,40,0,0" Height="15" VerticalAlignment="Top" Checked="ER0Checkbox_Checked" Unchecked="ER0Checkbox_Unchecked" IsChecked="True"/>
+                                <CheckBox x:Name="FR0Checkbox" Content="FR0 (5.Streifen DB REF)" HorizontalAlignment="Left" Margin="30,60,0,0" Height="15" VerticalAlignment="Top" Checked="FR0Checkbox_Checked" Unchecked="FR0Checkbox_Unchecked" IsChecked="True"/>
+                                <CheckBox x:Name="DR0Checkbox" Content="DR0 (4.Streifen DB REF)" HorizontalAlignment="Left" Margin="30,80,0,0" Height="15" VerticalAlignment="Top" Checked="DR0Checkbox_Checked" Unchecked="DR0Checkbox_Unchecked" IsChecked="True"/>
+                                <TextBox x:Name="PLTextboxFilter" HorizontalAlignment="Left" TextWrapping="Wrap" Margin="50,98,0,0" VerticalAlignment="Top" Width="90" BorderBrush="#FFE5E5E5" TextChanged="PLTextboxFilter_TextChanged"/>
+                                <Button x:Name="FilterButtonPl" Margin="75,35,0,0" Content="Filtern" HorizontalAlignment="Left"  VerticalAlignment="Center" Width="60" Height="20" FontSize="12" FontWeight="Normal" Click="FilterButton_Click"/>
+                            </Grid>
+                            <Grid x:Name="ProtoFilterGridPH" Visibility="Hidden" IsEnabled="False">
+                                <Rectangle HorizontalAlignment="Left" Height="100" Margin="10,20,0,0" Width="200" Stroke="Gray" Fill="#FFE5E5E5" VerticalAlignment="Top"/>
+                                <TextBox HorizontalAlignment="Left" Margin="20,10,0,0" Text=" Filter PH" FontWeight="Bold" TextWrapping="Wrap" VerticalAlignment="Top" Width="100" Background="#FFE5E5E5" BorderBrush="#FFE5E5E5" IsReadOnly="True"/>
+                                <CheckBox x:Name="O00Checkbox" Content="O00 (DBREF216)" HorizontalAlignment="Left" Margin="30,40,0,0" Height="15" VerticalAlignment="Top" Checked="O00Checkbox_Checked" Unchecked="O00Checkbox_Unchecked" IsChecked="True"/>
+                                <CheckBox x:Name="R00Checkbox" Content="R00 (DHHN92)" HorizontalAlignment="Left" Margin="30,60,0,0" Height="15" VerticalAlignment="Top" Checked="R00Checkbox_Checked" Unchecked="R00Checkbox_Unchecked" IsChecked="True"/>
+                                <TextBox x:Name="PHCustomTextbox" HorizontalAlignment="Left" TextWrapping="Wrap"  Margin="50,75,0,0" VerticalAlignment="Top" Width="98" BorderBrush="#FFE5E5E5" TextChanged="PHCustomTextbox_TextChanged" Height="25"/>
+                               
+                                <Button x:Name="FilterButtonPH" Margin="75,0,0,0" Content="Filtern" HorizontalAlignment="Left"  VerticalAlignment="Center" Width="60" Height="20" FontSize="12" FontWeight="Normal" Click="FilterButton_Click"/>
+
+                            </Grid>
+                            <Grid x:Name="ProtoFilterGridPK" Visibility="Hidden" IsEnabled="False">
+                                <Rectangle HorizontalAlignment="Left" Height="200" Margin="10,20,0,0" Width="200" Stroke="Gray" Fill="#FFE5E5E5" VerticalAlignment="Top"/>
+                                <TextBox HorizontalAlignment="Left" Margin="20,10,0,0" Text=" Filter PK" FontWeight="Bold" TextWrapping="Wrap" VerticalAlignment="Top" Width="100" Background="#FFE5E5E5" BorderBrush="#FFE5E5E5" IsReadOnly="True"/>
+                                <TextBlock Text="X:" Margin="20,40,0,0"/>
+                                <TextBlock Text="Y:" Margin="20,60,0,0"/>
+                                <TextBlock Text="Z" Margin="20,80,0,0"/>
+                                <TextBox x:Name="XFilter" HorizontalAlignment="Left" Margin="100,40,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="60" BorderBrush="#FFE5E5E5" TextChanged="XFilter_TextChanged"/>
+                                <TextBox x:Name="YFilter" HorizontalAlignment="Left" Margin="100,60,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="60" BorderBrush="#FFE5E5E5" TextChanged="YFilter_TextChanged"/>
+                                <TextBox x:Name="ZFilter" HorizontalAlignment="Left" Margin="100,80,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="60" BorderBrush="#FFE5E5E5" TextChanged="ZFilter_TextChanged"/>
+                                <Button x:Name="FilterButtonPk" Margin="75,170,0,0" Content="Filtern" HorizontalAlignment="Left"  VerticalAlignment="Center" Width="60" Height="20" FontSize="12" FontWeight="Normal" Click="FilterButton_Click"/>
+                            </Grid>
+                            <Grid x:Name="ProtoFilterGridPS" Visibility="Hidden" IsEnabled="False">
+                                </Grid>
+                            <Grid Grid.Row="1" Margin="0,40,0,0">
+                                <Button x:Name="ProtoFinalButton" Margin="40,0,0,0" Content="Export Ausführen" HorizontalAlignment="Left"  VerticalAlignment="Center" Width="150" Height="30" FontSize="15" FontWeight="DemiBold" Click="ProtoFinalButton_Click"/>
+                            </Grid>
+                        </Grid>
+                    </Expander>
+                    <GridSplitter HorizontalAlignment="Center" VerticalAlignment="Stretch" Grid.Column="1" Grid.Row="0"
+                                  Grid.RowSpan="2" Width="5"/>
+                </Grid>
+            </TabItem>
+
+        </TabControl>
+
+    </DockPanel>
+
+</Window>
