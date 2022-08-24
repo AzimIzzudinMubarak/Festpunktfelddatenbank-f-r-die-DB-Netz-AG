@@ -1,7 +1,6 @@
 <!--Headlines -->
 
-# **Front-End Festpunktfelddatenbank für die DB Netz AG**
-[![pipeline status](https://gitlab.rz.htw-berlin.de/softwareentwicklungsprojekt/wise2021-22/team1/badges/master/pipeline.svg)](https://gitlab.rz.htw-berlin.de/softwareentwicklungsprojekt/wise2020-21/team8/-/commits/master)
+# **Festpunktfelddatenbank für die DB Netz AG**
 
 ## Inhalt
 
@@ -20,8 +19,6 @@
 ## **1. Allgemein Information**
 
 ### Ein Projekt in Kooperation mit der DB Netz AG im Rahmen des Software Entwicklungsprojektes der HTW Berlin für das SoSe 2021.
-
-![Image](https://www.bing.com/images/search?view=detailV2&ccid=zI5ROXg2&id=4B4513DCFE61DFAA37DA9B158BDE22860901373E&thid=OIP.zI5ROXg22gaxLmKzJWiX4wHaD4&mediaurl=https%3a%2f%2fwww.bahn.com%2fcommon%2fview%2fstatic%2fv8%2fimg%2fsocial-media%2fdb_logo_sm_1200x630_2016.jpg&exph=630&expw=1200&q=deutsch+bahn+logo&simid=608052414764615496&ck=3AC7D33DF9C62B358F5BD0FDB41A1332&selectedIndex=33&FORM=IRPRST&ajaxhist=0)
 
 | Unternehmen                              |                                                           |
 | ---------------------------------------- | --------------------------------------------------------- |
