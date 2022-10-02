@@ -1,3 +1,15 @@
+# Fixed point field database for DB Netz AG
+
+- Build a management application to manage fixed point field for the work area
+- In cooperation with and under the supervision of DB Netz AG, Region Ost, Datenmanagement
+- Focus: Import and Export of data sets and files in .xls-, .xlsx-, .txt-, and ASCII-Format (.dbb and .nap) of the company
+- Program the Front-End using Windows Presentation Foundation (WPF)
+- Program the Back-End using .Net Core C#
+- Create a filter function to simplify the export process
+
+-----------------------------------------------------------------------------------------------------------------------------
+Deutsch:
+
 <!--Headlines -->
 
 # **Festpunktfelddatenbank für die DB Netz AG**
